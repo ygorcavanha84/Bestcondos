@@ -12,22 +12,27 @@
      ROBLOX AGE VERIFICATION
   ════════════════════════════════════════════════════ */
   function getRobloxAge(username) {
-    return fetch(PROXY + encodeURIComponent('https://users.roblox.com/v1/users/search?keyword=' + encodeURIComponent(username) + '&limit=10'))
+    var userId = null;
+    var userName = null;
+    return fetch(PROXY + encodeURIComponent('https://users.roblox.com/v1/usernames/users'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usernames: [username], excludeBannedUsers: false })
+    })
       .then(function (r) { return r.json(); })
       .then(function (data) {
         var users = data.data || [];
-        var exact = users.find(function (u) {
-          return u.name && u.name.toLowerCase() === username.toLowerCase();
-        });
-        if (!exact) return Promise.reject('NOT_FOUND');
-        return fetch(PROXY + encodeURIComponent('https://users.roblox.com/v1/users/' + exact.id));
+        if (!users.length) return Promise.reject('NOT_FOUND');
+        userId = users[0].id;
+        userName = users[0].name;
+        return fetch(PROXY + encodeURIComponent('https://users.roblox.com/v1/users/' + userId));
       })
       .then(function (r) { return r.json(); })
       .then(function (u) {
         if (!u.created) return Promise.reject('NO_DATE');
         var created = new Date(u.created);
         var days = Math.floor((Date.now() - created.getTime()) / 86400000);
-        return { days: days, id: u.id, name: u.name, displayName: u.displayName };
+        return { days: days, id: u.id || userId, name: u.name || userName, displayName: u.displayName || userName };
       });
   }
 
