@@ -294,27 +294,17 @@
       welcome:'Seja Bem‑vindo ao', brand:'Snow Best Condos',
       sub:'Entre com seu usuário do Roblox',
       inputLabel:'Seu usuário do Roblox', placeholder:'Ex: Player123',
-      warnTitle:'⚠️ AVISO IMPORTANTE',
-      warnBody:'Somente contas com mais de 80 dias podem entrar!',
       dcLabel:'Comunidade oficial', dcName:'Entrar no Discord',
-      btnText:'Verificar e Entrar', loading:'Verificando conta...',
+      btnText:'Entrar',
       errEmpty:'⚠️ Digite seu usuário do Roblox para continuar.',
-      errNotFound:'❌ Usuário não encontrado no Roblox. Verifique o nome.',
-      errFail:'⚠️ Não foi possível verificar. Tente novamente.',
-      successAge:function(d){ return '✅ Conta verificada! '+d+' dias de existência.'; },
     },
     en: {
       welcome:'Welcome to', brand:'Snow Best Condos',
       sub:'Enter your Roblox username',
       inputLabel:'Your Roblox username', placeholder:'Ex: Player123',
-      warnTitle:'⚠️ IMPORTANT WARNING',
-      warnBody:'Only accounts with more than 80 days can enter!',
       dcLabel:'Official community', dcName:'Join our Discord',
-      btnText:'Verify & Enter', loading:'Verifying account...',
+      btnText:'Enter',
       errEmpty:'⚠️ Please enter your Roblox username to continue.',
-      errNotFound:'❌ User not found on Roblox. Check the username.',
-      errFail:'⚠️ Could not verify. Please try again.',
-      successAge:function(d){ return '✅ Account verified! '+d+' days old.'; },
     }
   };
 
@@ -353,21 +343,13 @@
         <label>${t.inputLabel}</label>
         <input id="rc-entry-input" type="text" placeholder="${t.placeholder}" autocomplete="off" spellcheck="false"/>
       </div>
-      <div id="rc-age-badge"></div>
       <div id="rc-entry-feedback"></div>
-      <div id="rc-entry-warning">
-        <div class="warn-title">${t.warnTitle}</div>
-        <div class="warn-body">${t.warnBody}</div>
-      </div>
       <a id="rc-entry-discord" href="${DISCORD_INVITE}" target="_blank" rel="noopener">
         <div class="dc-icon">💬</div>
         <div class="dc-text"><div class="dc-label">${t.dcLabel}</div><div class="dc-name">${t.dcName}</div></div>
         <div class="dc-arrow">›</div>
       </a>
-      <button id="rc-entry-btn">
-        <div class="rc-spinner" id="rc-spinner"></div>
-        <span id="rc-btn-text">${t.btnText}</span>
-      </button>
+      <button id="rc-entry-btn">${t.btnText}</button>
       <div id="rc-entry-lang">
         <button class="rc-lang-btn ${currentLang==='pt'?'active':''}" data-l="pt">🇧🇷 PT</button>
         <button class="rc-lang-btn ${currentLang==='en'?'active':''}" data-l="en">🇺🇸 EN</button>
@@ -377,50 +359,21 @@
     document.body.appendChild(overlay);
 
     var btn=card.querySelector('#rc-entry-btn'), input=card.querySelector('#rc-entry-input');
-    var feedback=card.querySelector('#rc-entry-feedback'), ageBadge=card.querySelector('#rc-age-badge');
-    var spinner=card.querySelector('#rc-spinner'), btnText=card.querySelector('#rc-btn-text');
+    var feedback=card.querySelector('#rc-entry-feedback');
 
     var saved = localStorage.getItem(UNAME_KEY);
     if (saved) input.value = saved;
 
-    function setLoading(on) {
-      btn.disabled=on; input.disabled=on;
-      spinner.style.display=on?'block':'none';
-      btnText.textContent=on?t.loading:t.btnText;
-    }
     function showFeedback(msg,type) { feedback.textContent=msg; feedback.className=type; feedback.style.display='block'; }
 
     btn.addEventListener('click', function () {
       var name = input.value.trim();
-      feedback.style.display='none'; ageBadge.style.display='none';
+      feedback.style.display='none';
       if (!name) { showFeedback(t.errEmpty,'error'); input.focus(); return; }
-      setLoading(true);
-      getRobloxAge(name)
-        .then(function (info) {
-          setLoading(false);
-          if (info.days < MIN_DAYS) {
-            sendLog('⛔ Bloqueado (conta nova)', 0xef4444, { '👤 Usuário Roblox': info.name, '📅 Idade da Conta': info.days+' dias', '⏳ Faltam': (MIN_DAYS-info.days)+' dias' });
-            overlay.style.opacity='0';
-            overlay.style.transition='opacity 0.3s ease';
-            setTimeout(function () {
-              overlay.classList.add('rc-hidden');
-              showBlockedScreen(info, currentLang);
-            }, 300);
-          } else {
-            ageBadge.textContent=t.successAge(info.days); ageBadge.style.display='block';
-            localStorage.setItem(UNAME_KEY, info.name);
-            sendLog('🚪 Entrada no Site', 0x3b82f6, { '👤 Usuário Roblox': info.name, '📅 Idade da Conta': info.days+' dias' });
-            setTimeout(function () {
-              overlay.style.transition='opacity 0.4s ease'; overlay.style.opacity='0';
-              setTimeout(function () { overlay.classList.add('rc-hidden'); }, 400);
-            }, 900);
-          }
-        })
-        .catch(function (err) {
-          setLoading(false);
-          if (err==='NOT_FOUND') showFeedback(t.errNotFound,'error');
-          else showFeedback(t.errFail,'error');
-        });
+      localStorage.setItem(UNAME_KEY, name);
+      sendLog('🚪 Entrada no Site', 0x3b82f6, { '👤 Usuário Roblox': name });
+      overlay.style.transition='opacity 0.4s ease'; overlay.style.opacity='0';
+      setTimeout(function () { overlay.classList.add('rc-hidden'); }, 400);
     });
 
     input.addEventListener('keydown', function (e) { if(e.key==='Enter') btn.click(); feedback.style.display='none'; });
